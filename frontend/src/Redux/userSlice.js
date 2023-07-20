@@ -26,6 +26,31 @@ export const login = createAsyncThunk(
   }
 );
 
+export const register = createAsyncThunk(
+  "user/register",
+  async (
+    { formValue, navigate, toast },
+    { rejectWithValue, getState, dispatch }
+  ) => {
+    axios.defaults.withCredentials = true;
+    console.log(formValue);
+    try {
+      const { data } = await axios
+        .post("http://localhost:5000/api/users", formValue)
+        .then(() => {
+          navigate("/login");
+        })
+        .then(() => {
+          toast.success("Registred  Successfully");
+        });
+
+      return data;
+    } catch (error) {
+      toast.error(error.response.data.message);
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: "user",
   initialState: {},
@@ -38,6 +63,17 @@ const userSlice = createSlice({
       state.loading = false;
     });
     builder.addCase(login.rejected, (state, action) => {
+      state.loading = false;
+    });
+    /////////////////////////////////////////////////////////
+    builder.addCase(register.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(register.fulfilled, (state, action) => {
+      state.registredUser = action.payload;
+      state.loading = false;
+    });
+    builder.addCase(register.rejected, (state, action) => {
       state.loading = false;
     });
   },
