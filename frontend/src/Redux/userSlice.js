@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { setCredentials } from "./auhSlice";
+import { Logout, setCredentials } from "./auhSlice";
 
 export const login = createAsyncThunk(
   "user/login",
@@ -51,6 +51,27 @@ export const register = createAsyncThunk(
   }
 );
 
+export const updateProfile = createAsyncThunk(
+  "user/updateProfile",
+  async (
+    { formValue, toast, navigate },
+    { rejectWithValue, getState, dispatch }
+  ) => {
+    axios.defaults.withCredentials = true;
+    try {
+      const { data } = await axios
+        .put("http://localhost:5000/api/users/profile", formValue)
+        .then(() => {
+          dispatch(Logout());
+        });
+
+      return data;
+    } catch (error) {
+      toast.error(error.response.data.message);
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: "user",
   initialState: {},
@@ -74,6 +95,17 @@ const userSlice = createSlice({
       state.loading = false;
     });
     builder.addCase(register.rejected, (state, action) => {
+      state.loading = false;
+    });
+    /////////////////////////////////////////////////////////
+    builder.addCase(updateProfile.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(updateProfile.fulfilled, (state, action) => {
+      state.updatedUser = action.payload;
+      state.loading = false;
+    });
+    builder.addCase(updateProfile.rejected, (state, action) => {
       state.loading = false;
     });
   },
